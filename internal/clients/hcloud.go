@@ -19,6 +19,7 @@ package clients
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/crossplane/crossplane-runtime/pkg/resource"
 	"github.com/pkg/errors"
@@ -27,7 +28,7 @@ import (
 
 	"github.com/crossplane/terrajet/pkg/terraform"
 
-	"github.com/crossplane-contrib/provider-jet-template/apis/v1alpha1"
+	"github.com/crossplane-contrib/provider-jet-hcloud/apis/v1alpha1"
 )
 
 const (
@@ -36,7 +37,15 @@ const (
 	errGetProviderConfig    = "cannot get referenced ProviderConfig"
 	errTrackUsage           = "cannot track ProviderConfig usage"
 	errExtractCredentials   = "cannot extract credentials"
-	errUnmarshalCredentials = "cannot unmarshal template credentials as JSON"
+	errUnmarshalCredentials = "cannot unmarshal hcloud credentials as JSON"
+)
+
+const (
+	keyToken        = "token"
+	keyEndpoint     = "endpoint"
+	keyPollInterval = "poll_interval"
+
+	envToken = "HCLOUD_TOKEN"
 )
 
 // TerraformSetupBuilder builds Terraform a terraform.SetupFn function which
@@ -69,8 +78,8 @@ func TerraformSetupBuilder(version, providerSource, providerVersion string) terr
 		if err != nil {
 			return ps, errors.Wrap(err, errExtractCredentials)
 		}
-		templateCreds := map[string]string{}
-		if err := json.Unmarshal(data, &templateCreds); err != nil {
+		hcloudCreds := map[string]string{}
+		if err := json.Unmarshal(data, &hcloudCreds); err != nil {
 			return ps, errors.Wrap(err, errUnmarshalCredentials)
 		}
 
@@ -78,15 +87,25 @@ func TerraformSetupBuilder(version, providerSource, providerVersion string) terr
 		// Deprecated: In shared gRPC mode we do not support injecting
 		// credentials via the environment variables. You should specify
 		// credentials via the Terraform main.tf.json instead.
-		/*ps.Env = []string{
-			fmt.Sprintf("%s=%s", "HASHICUPS_USERNAME", templateCreds["username"]),
-			fmt.Sprintf("%s=%s", "HASHICUPS_PASSWORD", templateCreds["password"]),
-		}*/
+		// hu?
+		ps.Env = []string{
+			fmt.Sprintf("%s=%s", envToken, hcloudCreds[keyToken]),
+		}
+
 		// set credentials in Terraform provider configuration
-		/*ps.Configuration = map[string]interface{}{
-			"username": templateCreds["username"],
-			"password": templateCreds["password"],
-		}*/
+		ps.Configuration = map[string]interface{}{}
+		if v, ok := hcloudCreds[keyToken]; ok {
+			ps.Configuration[keyToken] = v
+		}
+
+		if v, ok := hcloudCreds[keyEndpoint]; ok {
+			ps.Configuration[keyEndpoint] = v
+		}
+
+		if v, ok := hcloudCreds[keyPollInterval]; ok {
+			ps.Configuration[keyPollInterval] = v
+		}
+
 		return ps, nil
 	}
 }

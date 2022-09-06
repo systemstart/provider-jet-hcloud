@@ -1,0 +1,23 @@
+apiVersion: network.hcloud.jet.crossplane.io/v1alpha1
+kind: Network
+metadata:
+  name: "mynet"
+spec:
+  forProvider:
+    ipRange: "10.0.0.0/8"
+    name: "mynet-again"
+  providerConfigRef:
+    name: default
+---
+apiVersion: network.hcloud.jet.crossplane.io/v1alpha1
+kind: Subnet
+metadata:
+  name: "foonet"
+spec:
+  forProvider:
+    ipRange: "10.0.1.0/24"
+    networkZone: "eu-central"
+    type: "cloud"
+    networkId: "mynet"
+  providerConfigRef:
+    name: default

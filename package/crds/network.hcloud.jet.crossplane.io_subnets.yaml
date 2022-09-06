@@ -5,18 +5,18 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: resources.null.template.jet.crossplane.io
+  name: subnets.network.hcloud.jet.crossplane.io
 spec:
-  group: null.template.jet.crossplane.io
+  group: network.hcloud.jet.crossplane.io
   names:
     categories:
     - crossplane
     - managed
-    - templatejet
-    kind: Resource
-    listKind: ResourceList
-    plural: resources
-    singular: resource
+    - hcloudjet
+    kind: Subnet
+    listKind: SubnetList
+    plural: subnets
+    singular: subnet
   scope: Cluster
   versions:
   - additionalPrinterColumns:
@@ -35,7 +35,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: Resource is the Schema for the Resources API
+        description: Subnet is the Schema for the Subnets API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -50,7 +50,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ResourceSpec defines the desired state of Resource
+            description: SubnetSpec defines the desired state of Subnet
             properties:
               deletionPolicy:
                 default: Delete
@@ -63,13 +63,43 @@ spec:
                 type: string
               forProvider:
                 properties:
-                  triggers:
-                    additionalProperties:
-                      type: string
-                    description: A map of arbitrary strings that, when changed, will
-                      force the null resource to be replaced, re-running any associated
-                      provisioners.
+                  ipRange:
+                    type: string
+                  networkId:
+                    type: number
+                  networkIdRef:
+                    description: A Reference to a named object.
+                    properties:
+                      name:
+                        description: Name of the referenced object.
+                        type: string
+                    required:
+                    - name
                     type: object
+                  networkIdSelector:
+                    description: A Selector selects an object.
+                    properties:
+                      matchControllerRef:
+                        description: MatchControllerRef ensures an object with the
+                          same controller reference as the selecting object is selected.
+                        type: boolean
+                      matchLabels:
+                        additionalProperties:
+                          type: string
+                        description: MatchLabels ensures an object with matching labels
+                          is selected.
+                        type: object
+                    type: object
+                  networkZone:
+                    type: string
+                  type:
+                    type: string
+                  vswitchId:
+                    type: number
+                required:
+                - ipRange
+                - networkZone
+                - type
                 type: object
               providerConfigRef:
                 default:
@@ -168,10 +198,12 @@ spec:
             - forProvider
             type: object
           status:
-            description: ResourceStatus defines the observed state of Resource.
+            description: SubnetStatus defines the observed state of Subnet.
             properties:
               atProvider:
                 properties:
+                  gateway:
+                    type: string
                   id:
                     type: string
                 type: object
